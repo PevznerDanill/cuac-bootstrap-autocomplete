@@ -38,8 +38,8 @@
         debounceMs: 200,
       });
 
-      $input.on('autocomplete:select', function (_e, item) {
-        $('#debug').text(JSON.stringify(item, null, 2));
+      $input.on('cuac-autocomplete:select', function (_e, item, raw) {
+        $('#debug').text(JSON.stringify({ item, raw }, null, 2));
       });
     </script>
   </body>

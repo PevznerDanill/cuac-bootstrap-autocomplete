@@ -5,7 +5,6 @@
 }
 
 .cuac-autocomplete-dropdown.dropdown-menu {
-  display: block; /* forced visible when we control visibility via JS */
   max-height: 260px;
   overflow-y: auto;
   width: 100%;

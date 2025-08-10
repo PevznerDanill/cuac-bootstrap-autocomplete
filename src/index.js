@@ -17,7 +17,7 @@ import { debounce, normalizeItems, extractArrayFromResponse, createListItemEleme
     itemTitle: 'title',
     itemValue: 'value',
     autoSelectFirst: false,
-    dropdownUlClass: 'dropdown-menu cuac-autocomplete-dropdown show',
+    dropdownUlClass: 'dropdown-menu cuac-autocomplete-dropdown',
     optionLiClass: 'dropdown-item',
     clearable: true,
     clearIcon: 'bi bi-x-square',
@@ -26,6 +26,10 @@ import { debounce, normalizeItems, extractArrayFromResponse, createListItemEleme
     debounceMs: 200,
     requestParam: 'q',
     extraAjaxParams: {},
+    // creation options
+    allowCreation: false,
+    createText: 'Create',
+    createParam: 'c',
   };
 
   function buildWrapper($input) {
@@ -56,7 +60,7 @@ import { debounce, normalizeItems, extractArrayFromResponse, createListItemEleme
   function setInputValue($input, item) {
     $input.val(item ? item.title : '');
     $input.data('cuac-selected', item || null);
-    $input.trigger('autocomplete:select', [item || null]);
+    $input.trigger('cuac-autocomplete:select', [item || null, item ? item.raw ?? null : null]);
     $input.trigger('change');
   }
 
@@ -112,17 +116,23 @@ import { debounce, normalizeItems, extractArrayFromResponse, createListItemEleme
         visibleOptions = matchLocalItems(allLocalOptions, term);
         highlightedIndex = options.autoSelectFirst && visibleOptions.length > 0 ? 0 : -1;
         if (visibleOptions.length === 0) {
-          if (options.hideNoData) {
-            closeDropdown();
+          const termStr = String(term || '').trim();
+          if (options.allowCreation && termStr.length > 0) {
+            visibleOptions = [{ title: options.createText + ' ' + termStr, value: termStr, raw: { term: termStr }, __create: true }];
+            highlightedIndex = 0;
           } else {
-            $dropdown.empty();
-            const noLi = document.createElement('li');
-            noLi.className = options.optionLiClass + ' cuac-autocomplete-no-data';
-            noLi.textContent = 'No results';
-            $dropdown.append(noLi);
-            openDropdown();
+            if (options.hideNoData) {
+              closeDropdown();
+            } else {
+              $dropdown.empty();
+              const noLi = document.createElement('li');
+              noLi.className = options.optionLiClass + ' cuac-autocomplete-no-data';
+              noLi.textContent = 'No results';
+              $dropdown.append(noLi);
+              openDropdown();
+            }
+            return;
           }
-          return;
         }
         renderOptions(document, $dropdown, visibleOptions, options.optionLiClass, highlightedIndex);
         openDropdown();
@@ -137,17 +147,23 @@ import { debounce, normalizeItems, extractArrayFromResponse, createListItemEleme
             visibleOptions = matchLocalItems(allLocalOptions, term);
             highlightedIndex = options.autoSelectFirst && visibleOptions.length > 0 ? 0 : -1;
             if (visibleOptions.length === 0) {
-              if (options.hideNoData) {
-                closeDropdown();
+              const termStr = String(term || '').trim();
+              if (options.allowCreation && termStr.length > 0) {
+                visibleOptions = [{ title: options.createText + ' ' + termStr, value: termStr, raw: { term: termStr }, __create: true }];
+                highlightedIndex = 0;
               } else {
-                $dropdown.empty();
-                const noLi = document.createElement('li');
-                noLi.className = options.optionLiClass + ' cuac-autocomplete-no-data';
-                noLi.textContent = 'No results';
-                $dropdown.append(noLi);
-                openDropdown();
+                if (options.hideNoData) {
+                  closeDropdown();
+                } else {
+                  $dropdown.empty();
+                  const noLi = document.createElement('li');
+                  noLi.className = options.optionLiClass + ' cuac-autocomplete-no-data';
+                  noLi.textContent = 'No results';
+                  $dropdown.append(noLi);
+                  openDropdown();
+                }
+                return;
               }
-              return;
             }
             renderOptions(document, $dropdown, visibleOptions, options.optionLiClass, highlightedIndex);
             openDropdown();
@@ -199,10 +215,35 @@ import { debounce, normalizeItems, extractArrayFromResponse, createListItemEleme
       e.preventDefault();
       const index = $(this).index();
       const selected = visibleOptions[index];
-      if (selected) {
-        setInputValue($input, selected);
-        closeDropdown();
+      if (!selected) return;
+
+      // Handle creation flow
+      if (selected.__create === true) {
+        const termStr = String(selected.value || '').trim();
+        if (typeof options.dataUrl === 'string' && options.dataUrl.length > 0) {
+          fetchRemoteOptions($, options.dataUrl, options.createParam, termStr, options.extraAjaxParams, currentRequestRef)
+            .then((data) => {
+              const rawArray = extractArrayFromResponse(data);
+              const normalized = normalizeItems(rawArray, options.itemTitle, options.itemValue);
+              const itemToSelect = normalized[0] || { title: termStr, value: termStr, raw: { term: termStr, created: true } };
+              setInputValue($input, itemToSelect);
+              closeDropdown();
+            })
+            .catch(() => {
+              const fallback = { title: termStr, value: termStr, raw: { term: termStr, created: true } };
+              setInputValue($input, fallback);
+              closeDropdown();
+            });
+        } else {
+          const localCreated = { title: termStr, value: termStr, raw: { term: termStr, created: true } };
+          setInputValue($input, localCreated);
+          closeDropdown();
+        }
+        return;
       }
+
+      setInputValue($input, selected);
+      closeDropdown();
     });
 
     $input.on('keydown', function onKeyDown(e) {
@@ -226,8 +267,32 @@ import { debounce, normalizeItems, extractArrayFromResponse, createListItemEleme
         case KEY.ENTER:
           if (highlightedIndex >= 0 && highlightedIndex < visibleOptions.length) {
             e.preventDefault();
-            setInputValue($input, visibleOptions[highlightedIndex]);
-            closeDropdown();
+            const selected = visibleOptions[highlightedIndex];
+            if (selected.__create === true) {
+              const termStr = String(selected.value || '').trim();
+              if (typeof options.dataUrl === 'string' && options.dataUrl.length > 0) {
+                fetchRemoteOptions($, options.dataUrl, options.createParam, termStr, options.extraAjaxParams, currentRequestRef)
+                  .then((data) => {
+                    const rawArray = extractArrayFromResponse(data);
+                    const normalized = normalizeItems(rawArray, options.itemTitle, options.itemValue);
+                    const itemToSelect = normalized[0] || { title: termStr, value: termStr, raw: { term: termStr, created: true } };
+                    setInputValue($input, itemToSelect);
+                    closeDropdown();
+                  })
+                  .catch(() => {
+                    const fallback = { title: termStr, value: termStr, raw: { term: termStr, created: true } };
+                    setInputValue($input, fallback);
+                    closeDropdown();
+                  });
+              } else {
+                const localCreated = { title: termStr, value: termStr, raw: { term: termStr, created: true } };
+                setInputValue($input, localCreated);
+                closeDropdown();
+              }
+            } else {
+              setInputValue($input, selected);
+              closeDropdown();
+            }
           }
           break;
         case KEY.ESC:
@@ -242,7 +307,7 @@ import { debounce, normalizeItems, extractArrayFromResponse, createListItemEleme
       $clearBtn.on('click', function onClearClick() {
         setInputValue($input, null);
         closeDropdown();
-        $input.trigger('autocomplete:clear');
+        $input.trigger('cuac-autocomplete:clear');
         $input.focus();
       });
     }

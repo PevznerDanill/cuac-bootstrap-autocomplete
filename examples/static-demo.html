@@ -31,6 +31,10 @@
         ],
         autoSelectFirst: true,
       });
+
+      $input.on('cuac-autocomplete:select', function (_e, item, raw) {
+        console.log('Selected:', item, raw);
+      });
     </script>
   </body>
   </html>

@@ -57,11 +57,14 @@ $input.createAutocomplete({
 - **debounceMs** (number, default: `200`): Debounce delay for requests.
 - **requestParam** (string, default: `"q"`): Query parameter name for remote requests.
 - **extraAjaxParams** (object): Extra query params for remote requests.
+- **allowCreation** (boolean, default: `false`): If `true`, when there are no results and the input is non-empty, shows a "Create ..." action.
+- **createText** (string, default: `"Create"`): Text prefix used for the create action.
+- **createParam** (string, default: `"c"`): When the create action is selected and `dataUrl` is set, the request is sent using this parameter instead of `requestParam`. The first item returned is automatically selected.
 
 ### Events
 
-- `autocomplete:select` — fired on the input when an item is selected. Payload: `(event, item)`.
-- `autocomplete:clear` — fired when the clear button is pressed.
+- `cuac-autocomplete:select` — fired on the input when an item is selected. Payload: `(event, item, raw)` where `raw` is the original object from the server (or the original static item when using local items). When typing-based creation is used, `raw` may include `{ created: true }`.
+- `cuac-autocomplete:clear` — fired when the clear button is pressed.
 
 ### CDN / Browser Usage
 
