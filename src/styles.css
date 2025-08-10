@@ -1,0 +1,35 @@
+/* CUAC Bootstrap Autocomplete - minimal styles to complement Bootstrap 5 */
+
+.cuac-autocomplete-wrapper {
+  position: relative;
+}
+
+.cuac-autocomplete-dropdown.dropdown-menu {
+  display: block; /* forced visible when we control visibility via JS */
+  max-height: 260px;
+  overflow-y: auto;
+  width: 100%;
+  z-index: 1051; /* above modals backdrop but below modals (Bootstrap modal is 1055) */
+}
+
+.cuac-autocomplete-clear-btn {
+  position: absolute;
+  right: 0.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  padding: 0.125rem 0.25rem;
+  color: #6c757d;
+  line-height: 1;
+}
+
+.cuac-autocomplete-clear-btn:hover {
+  color: #343a40;
+}
+
+.cuac-autocomplete-no-data {
+  opacity: 0.65;
+  pointer-events: none;
+}
+

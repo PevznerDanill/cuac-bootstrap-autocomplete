@@ -1,0 +1,48 @@
+{
+  "name": "cuac-bootstrap-autocomplete",
+  "version": "0.1.0",
+  "description": "jQuery + Bootstrap 5 autocomplete component with AJAX support",
+  "main": "dist/cuac-bootstrap-autocomplete.min.js",
+  "module": "dist/cuac-bootstrap-autocomplete.esm.js",
+  "style": "dist/cuac-bootstrap-autocomplete.min.css",
+  "license": "MIT",
+  "keywords": [
+    "jquery",
+    "bootstrap",
+    "autocomplete",
+    "ajax",
+    "dropdown"
+  ],
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build:js:iife": "esbuild src/index.js --bundle --minify --target=es2017 --format=iife --global-name=CUACBootstrapAutocomplete --outfile=dist/cuac-bootstrap-autocomplete.min.js",
+    "build:js:esm": "esbuild src/index.js --bundle --minify --target=es2017 --format=esm --external:jquery --outfile=dist/cuac-bootstrap-autocomplete.esm.js",
+    "build:css": "postcss src/styles.css -u cssnano -o dist/cuac-bootstrap-autocomplete.min.css",
+    "build": "rimraf dist && mkdir -p dist && npm run build:js:iife && npm run build:js:esm && npm run build:css",
+    "dev": "npm run build -- --watch"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/cuac-bootstrap-autocomplete.esm.js",
+      "default": "./dist/cuac-bootstrap-autocomplete.min.js"
+    }
+  },
+  "sideEffects": true,
+  "peerDependencies": {
+    "jquery": ">=3",
+    "bootstrap": ">=5"
+  },
+  "devDependencies": {
+    "cssnano": "^6.0.1",
+    "esbuild": "^0.21.5",
+    "postcss": "^8.4.41",
+    "postcss-cli": "^11.0.0",
+    "rimraf": "^5.0.7"
+  }
+}
+
